@@ -1,0 +1,281 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<script src="~/lib/datatable/script/jquery-3.7.1.js"></script>
+<div class="container">
+    <div class="row col-md-12">
+        <label class="col-md-1" style="font-weight: bold;">Id Card : </label>
+        <div class="col-md-3">
+            <input type="text" id="txtIdCard" class="form-control"/>
+        </div>
+        <div class="col-md-2">
+            <button id="btnSearch" class="btn btn-primary" onclick="doSearch()">Search</button>
+            <button id="btnClear" class="btn btn-secondary" onclick="doClear()">Clear</button>
+        </div>
+        <div class="col-md-6 text-right pr-0">
+            <button id="btnAdd" class="btn btn-success" onclick="doAdd()" style="min-width: 100px;">Add</button>
+        </div>
+    </div> 
+    <table id="tableCustomer" class="table table-striped table-bordered" style="width:100%">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Customer Id</th>
+                <th>Name</th>
+                <th>Id Card</th>
+                <th>Gender</th>
+                <th>E-mail</th>
+                <th>Birth Date</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+<div class="modal fade" id="AddEditModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel"><i class="fa-solid fa-arrow-pointer"></i>Add Edit</h5>
+            </div>
+            <div class="modal-body">
+                <div class="row col-md-12" id="divCustomerId">
+                    <label class="col-md-4 lbl">Customer Id : </label>
+                    <div class="col-md-8">
+                        <label id="lblCustomerId"></label>
+                    </div>
+                </div>
+                <div class="row col-md-12 mt-2">
+                    <label class="col-md-4 lbl">Name<span style="color: red;">*</span> : </label>
+                    <div class="col-md-8">
+                        <input type="text" id="txtName" class="form-control" />
+                    </div>
+                </div>
+                <div class="row col-md-12 mt-2">
+                    <label class="col-md-4 lbl"> Id Card<span style="color: red;">*</span> : </label>
+                    <div class="col-md-8">
+                        <input type="text" id="txtSaveIdCard" class="form-control" />
+                    </div>
+                </div>
+                <div class="row col-md-12 mt-2">
+                    <label class="col-md-4 lbl">Gender<span style="color: red;">*</span> : </label>
+                    <div class="col-md-8">
+                        <input type="text" id="txtGender" class="form-control" />
+                    </div>
+                </div>
+                <div class="row col-md-12 mt-2">
+                    <label class="col-md-4 lbl">E-mail<span style="color: red;">*</span> : </label>
+                    <div class="col-md-8">
+                        <input type="text" id="txtEmail" class="form-control" />
+                    </div>
+                </div>
+                <div class="row col-md-12 mt-2">
+                    <label class="col-md-4 lbl">Birth Date<span style="color: red;">*</span> : </label>
+                    <div class="col-md-8">
+                        <input type="text" id="txtBirthDate" class="form-control" placeholder="yyyy-mm-dd" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnConfirmSave" type="button" class="btn btn-sm btn-primary"><i class="fa-solid fa-check"></i>&nbsp;Confirm</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal"><i class="fa-solid fa-xmark"></i>&nbsp;Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="DeleteModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel"><i class="fa-solid fa-arrow-pointer"></i>Confirm Delete</h5>
+            </div>
+            <div class="modal-body">
+                <div class="row col-md-12">
+                    <label id="lblConfirmDelete"></label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnConfirmDelete" type="button" class="btn btn-sm btn-primary"><i class="fa-solid fa-check"></i>&nbsp;Confirm</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal"><i class="fa-solid fa-xmark"></i>&nbsp;Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    var _table;
+    $(document).ready(function(){
+        _table = $('#tableCustomer').DataTable({
+            data: loadTable(),
+            autoWidth: false,
+            responsive: true,
+            filter: false,
+            pageLength: 10,
+            lengthMenu: [10, 20, 50, 100],
+            columns: [
+                {
+                    data: (data) => {
+                        let customer_id = "'" + data.customer_Id + "'";
+                        let name = "'" + data.name + "'";
+                        let id_card = "'" + data.id_Card + "'";
+                        let gender = "'" + data.gender + "'";
+                        let email = "'" + data.email + "'";
+                        let birth_date = "'" + data.str_Date_Of_Birth + "'";
+                        let strButton = '<button class="btn btn-primary btn-edit" onclick="doEdit(' + customer_id + "," + name + "," + id_card + "," + gender + "," + email + "," + birth_date + ')">Edit</button> &nbsp;' +
+                            '<button class="btn btn-danger btn-delete" onclick="doDelete(' + customer_id + ')">Del</button>'
+                        return strButton;
+                    },
+                    className: "text-center"
+                },
+                {
+                    data: "customer_Id",
+                    className: "text-center"
+                },
+                {
+                    data: "name",
+                    className: "text-center"
+                },
+                {
+                    data: "id_Card",
+                    className: "text-center"
+                },
+                {
+                    data: "gender",
+                    className: "text-center"
+                },
+                {
+                    data: "email",
+                    className: "text-center"
+                },
+                {
+                    data: "str_Date_Of_Birth",
+                    className: "text-center"
+                },
+            ]
+        });
+
+        $('#btnConfirmSave').on('click', function() {
+            let val = $(this).val();
+            let obj = {
+                Customer_Id: $('#lblCustomerId').html(),
+                Name: $('#txtName').val(),
+                Gender: $('#txtGender').val(),
+                Email: $('#txtEmail').val(),
+                Date_Of_Birth: $('#txtBirthDate').val(),
+                Id_Card: $('#txtSaveIdCard').val()
+            };
+
+            if(obj.Name && obj.Gender && obj.Email && obj.Date_Of_Birth && obj.Id_Card)
+            {
+                if(val === 'Add') {
+                    $.ajax({
+                        type: "POST",
+                        url: "../Home/DoAdd",
+                        data: obj,
+                        success: function (data) {
+                        
+                            loadTable();
+
+                            if(data.is_Success)
+                                $('#AddEditModal').modal('toggle');
+                        }
+                    });
+                }
+                else if(val === 'Edit') {
+                    $.ajax({
+                        type: "POST",
+                        url: "../Home/DoEdit",
+                        data: obj,
+                        success: function (data) {
+
+                           loadTable();
+
+                            if(data.is_Success)
+                                $('#AddEditModal').modal('toggle');
+
+                        }
+                    });
+                }
+            }
+        });
+
+        $('#btnConfirmDelete').on('click', function() {
+            let val = $(this).val();
+            $.ajax({
+                type: "POST",
+                url: "../Home/DoDelete",
+                data: { customer_id: val },
+                success: function (data) {
+                    
+                    loadTable();
+
+                    if(data.is_Success)
+                        $('#DeleteModal').modal('toggle');
+                }
+            });
+        });
+
+    });
+
+    let loadTable = () => {
+        $.ajax({
+            type: "POST",
+            url: "../Home/GetListData",
+            data: { id_card: $('#txtIdCard').val() },
+            success: function (data) {
+
+                _table.clear();
+                _table.rows.add(data).draw();
+
+            }
+        });
+    }
+
+    let doSearch = () => {
+        loadTable();
+    }
+
+    let doAdd = () => {
+        $('#modalLabel').html('Add');
+        $('#divCustomerId').hide();
+        $('#lblCustomerId').html('');
+        $('#txtName').val('');
+        $('#txtSaveIdCard').val('');
+        $('#txtGender').val('');
+        $('#txtEmail').val('');
+        $('#txtBirthDate').val('');
+        $('#AddEditModal').modal('toggle');
+
+        //assign action
+        $('#btnConfirmSave').val('Add');
+    }
+
+    let doEdit = (customer_id, name, id_card, gender, email, birth_date) => {
+        $('#modalLabel').html('Edit');
+        $('#divCustomerId').show();
+        $('#lblCustomerId').html(customer_id);
+        $('#txtName').val(name);
+        $('#txtSaveIdCard').val(id_card);
+        $('#txtGender').val(gender);
+        $('#txtEmail').val(email);
+        $('#txtBirthDate').val(birth_date);
+        $('#AddEditModal').modal('toggle');
+
+        //assign action
+        $('#btnConfirmSave').val('Edit');
+    }
+
+    let doDelete = (customer_id) => {
+        $('#btnConfirmDelete').val(customer_id);
+        $('#lblConfirmDelete').html('De you confirm delete Customer Id : ' + customer_id + " ?");
+        $('#DeleteModal').modal('toggle');
+    }
+
+    let doClear = () => {
+        $('#txtIdCard').val('');
+        loadTable();
+    }
+
+</script>
+
